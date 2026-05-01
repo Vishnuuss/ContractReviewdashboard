@@ -246,22 +246,26 @@ td { padding: 16px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0
 }
 @media (max-width: 600px) {
   #app-layout { flex-direction: column-reverse; }
-  #sidebar { width: 100%; height: 60px; flex-direction: row; justify-content: space-around; border-right: none; border-top: 1px solid var(--border-subtle); z-index: 999; }
-  #sidebar:hover { width: 100%; }
+  #sidebar { position: fixed; bottom: 0; left: 0; width: 100vw; height: 70px; flex-direction: row; justify-content: space-around; border-right: none; border-top: 1px solid var(--border-subtle); z-index: 9999; background: rgba(4, 13, 26, 0.95); backdrop-filter: blur(20px); }
+  #sidebar:hover { width: 100vw; }
   .sidebar-header, .sidebar-footer, .nav-divider { display: none; }
   .nav-section { margin: 0; display: flex; width: 100%; justify-content: space-around; align-items:center; }
-  .nav-item { padding: 12px; justify-content: center; flex: 1; }
+  .nav-item { padding: 12px; justify-content: center; flex: 1; margin:0; }
   .nav-item span { display: none; }
   .nav-item.active { border-left: none; border-bottom: 3px solid var(--accent-primary); box-shadow: inset 0 -10px 20px -10px rgba(0,200,255,0.2); background: rgba(0,200,255,0.1); }
   .badge { position: absolute; top: 8px; right: 25%; }
   
-  #topbar { padding: 0 16px; }
+  #topbar { padding: 0 16px; position: fixed; top: 0; left: 0; width: 100vw; z-index: 9999; }
   .page-title { display: none; }
   .search-container { margin-left: 0; }
   .topbar-right { display: none; } /* Hide status chip on small phones to save space */
   
-  #pages-container { padding: 16px; }
-  .kpi-grid { grid-template-columns: 1fr; gap: 16px; }
-  .charts-row { gap: 16px; }
+  #main-content { margin-top: 60px; margin-bottom: 70px; height: calc(100vh - 130px); }
+  #pages-container { padding: 16px; padding-bottom: 40px; }
+  .kpi-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom:16px; }
+  .charts-row { gap: 16px; margin-bottom:16px; }
   .card, .upload-hero { padding: 16px; }
+  
+  /* Modal Mobile Fix */
+  .modal-content { max-height: 90vh; overflow-y: auto; }
 }

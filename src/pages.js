@@ -32,7 +32,7 @@ export function getDashboardPage(state) {
       </div>
 
       <div class="charts-row">
-        <div class="card tap-anim" style="cursor:pointer;" onclick="window.showToast('Drilldown into Risk Distribution', 'info')">
+        <div class="card tap-anim">
           <div class="card-title">Risk Distribution</div>
           <div class="chart-container"><canvas id="donutChart"></canvas></div>
         </div>
@@ -110,7 +110,7 @@ export function getFlagsPage() {
     <div class="page active" id="page-flags">
       <div style="margin-bottom:24px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px;">
         <div style="font-family:var(--font-display); font-size:24px; font-weight:800; color:var(--color-danger); text-shadow:var(--glow-danger);">COMMAND CENTER</div>
-        <button class="btn-primary with-ripple tap-anim" style="padding:10px 20px; font-size:14px;" onclick="window.showToast('Resolved all flags securely', 'success')">✅ BULK RESOLVE</button>
+        <button class="btn-primary with-ripple tap-anim" id="btn-bulk-resolve" style="padding:10px 20px; font-size:14px;" onclick="window.bulkResolve()">✅ BULK RESOLVE</button>
       </div>
 
       <div class="charts-row">
@@ -120,7 +120,7 @@ export function getFlagsPage() {
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="action-items-container">
         <div class="card-title">Action Items</div>
         <div id="action-item-1" class="flag-card critical-flag with-ripple tap-anim">
           <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
@@ -130,7 +130,7 @@ export function getFlagsPage() {
           <div style="font-weight:700; margin-bottom:4px;">Unilateral Price Escalation — 12% Uncapped</div>
           <div style="font-family:var(--font-mono); font-size:11px; color:var(--accent-primary); margin-bottom:8px;">CTR-2025-0047 · Section 3.3</div>
           <div style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Vendor retains the right to increase prices annually without cap.</div>
-          <button class="btn-primary with-ripple tap-anim" style="padding:6px 12px; font-size:12px; width:auto;" onclick="window.resolveActionItem('action-item-1')">Mark as Resolved</button>
+          <button class="btn-primary tap-anim" style="padding:6px 12px; font-size:12px; width:auto; border-radius:4px;" onclick="window.resolveActionItem('action-item-1')">Mark as Resolved</button>
         </div>
         <div id="action-item-2" class="flag-card high-flag with-ripple tap-anim">
           <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
@@ -140,7 +140,7 @@ export function getFlagsPage() {
           <div style="font-weight:700; margin-bottom:4px;">Missing GDPR Addendum</div>
           <div style="font-family:var(--font-mono); font-size:11px; color:var(--accent-primary); margin-bottom:8px;">CTR-2025-0052 · Schedule B</div>
           <div style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">No specific DPA included for EU citizen data.</div>
-          <button class="btn-primary with-ripple tap-anim" style="padding:6px 12px; font-size:12px; width:auto;" onclick="window.resolveActionItem('action-item-2')">Generate DPA</button>
+          <button class="btn-primary tap-anim" style="padding:6px 12px; font-size:12px; width:auto; border-radius:4px;" onclick="window.resolveActionItem('action-item-2')">Generate DPA</button>
         </div>
       </div>
     </div>
@@ -156,8 +156,8 @@ export function getPipelinePage() {
 
       <div class="card" style="margin-bottom:24px;">
         <div class="card-title">Live Webhook Log</div>
-        <div style="background:#000; border-radius:8px; padding:16px; font-family:var(--font-mono); font-size:12px; color:var(--color-success); height:300px; overflow-y:auto;">
-          <div style="color:var(--text-secondary); margin-bottom:4px;">[14:32:11] POST → http://localhost:5678/webhook/contract-review-wtf</div>
+        <div id="pipeline-log" style="background:#000; border-radius:8px; padding:16px; font-family:var(--font-mono); font-size:12px; color:var(--color-success); height:400px; overflow-y:auto;">
+          <div style="color:var(--text-secondary); margin-bottom:4px;">[14:32:11] POST → /webhook/contract-review-wtf</div>
           <div style="color:var(--color-success); margin-bottom:4px;">  Response: 200 · {"message":"Workflow was started"}</div>
           <div style="color:var(--text-secondary); margin-bottom:16px;">  Latency: 241ms ✓</div>
           <div style="color:var(--accent-primary); margin-bottom:4px;">[14:32:14] SYSTEM: AI Agents Dispatched</div>
@@ -166,7 +166,7 @@ export function getPipelinePage() {
           <div style="color:var(--text-secondary); margin-bottom:16px;">  > Agent 3: Red Flags (Scanning for liabilities)</div>
           <div style="color:var(--color-warning); margin-bottom:4px;">[14:32:28] Alert: High Risk Clauses Detected</div>
           <div style="color:var(--text-secondary); margin-bottom:4px;">[14:32:29] Risk Score Calculated: 71/100</div>
-          <div style="color:var(--color-success); margin-bottom:4px;">[14:32:30] Analysis completed. Data synced to Airtable.</div>
+          <div style="color:var(--color-success); margin-bottom:4px;">[14:32:30] Analysis completed. Data synced.</div>
         </div>
       </div>
     </div>
@@ -181,15 +181,11 @@ export function getSettingsPage() {
       </div>
 
       <div class="card">
-        <div class="card-title">AI & Integrations Configuration</div>
+        <div class="card-title">Integration Configuration</div>
         <div class="form-grid" style="margin-bottom:24px;">
           <div class="form-group">
-            <label>Primary AI Model</label>
-            <select class="form-control tap-anim">
-              <option>Gemini 1.5 Pro</option>
-              <option>Gemini 2.5 Flash</option>
-              <option>GPT-4o</option>
-            </select>
+            <label>N8N Webhook URL</label>
+            <input type="text" id="setting-webhook-url" class="form-control tap-anim" value="http://localhost:5678/webhook/contract-review-wtf">
           </div>
           <div class="form-group">
             <label>Airtable Base ID</label>
@@ -199,13 +195,13 @@ export function getSettingsPage() {
 
         <div style="display:flex; align-items:center; justify-content:space-between; padding:16px; border:1px solid var(--border-subtle); border-radius:8px; margin-bottom:24px;">
           <div>
-            <div style="font-weight:600; margin-bottom:4px;">Hallucination Guard</div>
-            <div style="font-size:12px; color:var(--text-secondary)">Cross-verifies generated clauses against original text.</div>
+            <div style="font-weight:600; margin-bottom:4px;">Auto-Mock Mode (Vercel Compatibility)</div>
+            <div style="font-size:12px; color:var(--text-secondary)">Enable if localhost webhooks fail due to HTTPS constraints.</div>
           </div>
-          <input type="checkbox" checked style="width:20px; height:20px; cursor:pointer;" class="tap-anim">
+          <input type="checkbox" id="setting-mock" checked style="width:20px; height:20px; cursor:pointer;" class="tap-anim">
         </div>
 
-        <button class="btn-primary with-ripple tap-anim" style="width:100%;" onclick="window.showToast('Settings saved securely', 'success')">💾 SAVE PREFERENCES</button>
+        <button class="btn-primary with-ripple tap-anim" style="width:100%;" onclick="window.showToast('Settings saved successfully', 'success')">💾 SAVE PREFERENCES</button>
       </div>
     </div>
   `;
@@ -219,31 +215,22 @@ export function getNotificationsPage() {
       </div>
 
       <div class="card" style="padding:0; overflow:hidden;">
-        <div style="padding:16px; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px; background:rgba(255,45,85,0.1);">
+        <div class="with-ripple tap-anim" style="padding:16px; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px; background:rgba(255,45,85,0.1); cursor:pointer;">
           <div style="width:8px; height:8px; border-radius:50%; background:var(--color-danger);"></div>
           <div>
             <div style="font-weight:600; font-size:14px;">Urgent: Legal Review Required</div>
-            <div style="font-size:12px; color:var(--text-secondary);">CTR-2025-0038 (GlobalPay Corp) requires immediate attention.</div>
+            <div style="font-size:12px; color:var(--text-secondary);">CTR-2025-0038 requires immediate attention.</div>
           </div>
           <div style="margin-left:auto; font-size:11px; color:var(--text-muted);">1 hr ago</div>
         </div>
         
-        <div style="padding:16px; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px; background:rgba(0,255,136,0.05);">
+        <div class="with-ripple tap-anim" style="padding:16px; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px; background:rgba(0,255,136,0.05); cursor:pointer;">
           <div style="width:8px; height:8px; border-radius:50%; background:var(--color-success);"></div>
           <div>
             <div style="font-weight:600; font-size:14px;">Pipeline Run Successful</div>
-            <div style="font-size:12px; color:var(--text-secondary);">Processed 14 pages for TechBridge Solutions in 1.4s</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Processed 14 pages for TechBridge Solutions</div>
           </div>
           <div style="margin-left:auto; font-size:11px; color:var(--text-muted);">3 hrs ago</div>
-        </div>
-
-        <div style="padding:16px; display:flex; align-items:center; gap:12px;">
-          <div style="width:8px; height:8px; border-radius:50%; background:var(--text-muted);"></div>
-          <div>
-            <div style="font-weight:600; font-size:14px; color:var(--text-secondary);">Airtable Sync Completed</div>
-            <div style="font-size:12px; color:var(--text-muted);">Daily backup synchronized successfully.</div>
-          </div>
-          <div style="margin-left:auto; font-size:11px; color:var(--text-muted);">Yesterday</div>
         </div>
       </div>
     </div>

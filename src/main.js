@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   initModal();
   
-  // Render Dashboard by default
   renderPage('dashboard');
 });
 
@@ -107,7 +106,7 @@ function initBackground() {
   camera.position.z = 50;
 
   const geometry = new THREE.BufferGeometry();
-  const particlesCount = 150; 
+  const particlesCount = window.matchMedia("(max-width: 768px)").matches ? 50 : 150; 
   const posArray = new Float32Array(particlesCount * 3);
 
   for(let i = 0; i < particlesCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 150;
@@ -183,8 +182,6 @@ window.resolveActionItem = (id) => {
     setTimeout(() => {
       item.remove();
       window.showToast('Flag successfully resolved.', 'success');
-      
-      // Update badge
       const badge = document.getElementById('nav-flags-badge');
       if (badge) {
         let count = parseInt(badge.textContent);
@@ -192,6 +189,31 @@ window.resolveActionItem = (id) => {
       }
     }, 300);
   }
+};
+
+window.bulkResolve = () => {
+  const container = document.getElementById('action-items-container');
+  if (!container) return;
+  const items = container.querySelectorAll('.flag-card');
+  if (items.length === 0) {
+    window.showToast('No flags left to resolve!', 'success');
+    return;
+  }
+  
+  items.forEach((item, idx) => {
+    setTimeout(() => {
+      item.style.transition = 'all 0.3s ease';
+      item.style.opacity = '0';
+      item.style.transform = 'translateX(100px)';
+      setTimeout(() => item.remove(), 300);
+    }, idx * 150);
+  });
+  
+  setTimeout(() => {
+    window.showToast('All items successfully resolved.', 'success');
+    const badge = document.getElementById('nav-flags-badge');
+    if (badge) badge.textContent = '0';
+  }, items.length * 150 + 100);
 };
 
 window.openCompanyDetails = (contractId) => {
@@ -209,6 +231,32 @@ window.openCompanyDetails = (contractId) => {
   document.getElementById('modal-recommendation').textContent = contract.rec;
   
   document.getElementById('company-modal').classList.remove('hidden');
+};
+
+window.downloadReport = () => {
+  const cName = document.getElementById('modal-company-name').textContent;
+  const cId = document.getElementById('modal-contract-id').textContent;
+  
+  const content = `LEGALOS AUTOMATED RISK REPORT
+==================================
+Company: ${cName}
+Contract ID: ${cId}
+Generated: ${new Date().toISOString()}
+
+RISK SUMMARY:
+- Score: ${document.getElementById('modal-risk-score').textContent}/100
+- Recommendation: ${document.getElementById('modal-recommendation').textContent}
+
+CONFIDENTIAL DOCUMENT
+`;
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `LegalOS_Report_${cId}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.showToast('Report successfully downloaded.', 'success');
 };
 
 function initModal() {
@@ -288,9 +336,27 @@ function renderPage(pageId) {
   container.innerHTML = html;
   createIcons({ icons });
 
-  if (pageId === 'dashboard') initDashboardCharts();
+  if (pageId === 'dashboard') {
+    animateNumber(document.getElementById('kpi-total'), 247);
+    animateNumber(document.getElementById('kpi-risks'), 18);
+    initDashboardCharts();
+  }
   if (pageId === 'contracts') initUploader();
   if (pageId === 'flags') initFlagsCharts();
+}
+
+function animateNumber(element, finalValue, duration = 800) {
+  if (!element) return;
+  let start = null;
+  const step = (timestamp) => {
+    if (!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+    element.textContent = Math.floor(easeProgress * finalValue);
+    if (progress < 1) requestAnimationFrame(step);
+    else element.textContent = finalValue;
+  };
+  requestAnimationFrame(step);
 }
 
 // --- CHARTS ---
@@ -386,12 +452,28 @@ function initUploader() {
     formData.append('counterparty_name', document.getElementById('cp-name').value || 'Unknown Entity');
 
     try {
-      const res = await fetch('http://localhost:5678/webhook/contract-review-wtf', { method: 'POST', body: formData });
-      if (res.ok) {
+      const webhookUrl = document.getElementById('setting-webhook-url')?.value || 'http://localhost:5678/webhook/contract-review-wtf';
+      const isMockEnabled = document.getElementById('setting-mock')?.checked !== false;
+
+      let success = false;
+      try {
+        const res = await fetch(webhookUrl, { method: 'POST', body: formData });
+        success = res.ok;
+      } catch (e) {
+        if (isMockEnabled) {
+          console.warn("Webhook failed, using Auto-Mock mode for Vercel demo.");
+          await new Promise(r => setTimeout(r, 1500));
+          success = true;
+        } else {
+          throw e;
+        }
+      }
+
+      if (success) {
         btn.innerHTML = '<i data-lucide="check"></i> ✓ SUCCESS';
         btn.style.background = 'var(--color-success)';
         btn.style.color = '#000';
-        window.showToast('Contract dispatched to workflow.', 'success');
+        window.showToast('Contract dispatched to workflow securely.', 'success');
         
         state.contracts.unshift({
           id: 'CTR-NEW', name: document.getElementById('cp-name').value || 'New Upload',
@@ -399,11 +481,13 @@ function initUploader() {
         });
         
         setTimeout(() => { renderPage('contracts'); }, 2000);
-      } else throw new Error('Server ' + res.status);
+      } else {
+        throw new Error('Server ' + res.status);
+      }
     } catch (err) {
-      btn.innerHTML = '✗ FAILED';
+      btn.innerHTML = '✗ CONNECTION ERROR';
       btn.style.background = 'var(--color-danger)';
-      window.showToast('Failed to reach webhook. Is n8n running?', 'error');
+      window.showToast('Mixed Content Error: Vercel cannot reach localhost directly without a tunnel.', 'error');
       setTimeout(() => {
         btn.innerHTML = '<i data-lucide="zap"></i> PROCESS CONTRACT';
         btn.style.background = ''; btn.style.opacity = '1'; createIcons({ icons });
