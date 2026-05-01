@@ -2,18 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>LegalOS by AntiGravity</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Outfit:wght@100..900&family=Syne:wght@400..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@100..900&family=Syne:wght@400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./src/style.css">
 </head>
 <body>
-  <!-- Custom Cursor -->
+  <!-- Custom Cursor (Disabled on mobile) -->
   <div id="cursor-ring"></div>
   <div id="cursor-dot"></div>
-  <div id="cursor-trails"></div>
 
   <!-- Background Canvas -->
   <canvas id="bg-canvas"></canvas>
@@ -28,53 +27,25 @@
         <i data-lucide="hexagon" class="logo-icon"></i>
         <span class="logo-text">LEGALOS</span>
       </div>
-      <div class="system-status-indicator">
-        <div class="pulse-dot"></div>
-        <span>SYSTEM LIVE</span>
-      </div>
       
-      <div class="nav-section">
+      <div class="nav-section" style="margin-top: 0; display: flex; flex-direction: column; height: 100%;">
         <div class="nav-divider">CORE</div>
-        <a href="#dashboard" class="nav-item active" data-page="dashboard">
+        <a href="#dashboard" class="nav-item active with-ripple" data-page="dashboard">
           <i data-lucide="bar-chart-2"></i>
           <span>Dashboard</span>
         </a>
-        <a href="#contracts" class="nav-item" data-page="contracts">
+        <a href="#contracts" class="nav-item with-ripple" data-page="contracts">
           <i data-lucide="file-text"></i>
-          <span>Contracts</span>
+          <span>Library & Upload</span>
         </a>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-divider">ANALYSIS</div>
-        <a href="#flags" class="nav-item" data-page="flags">
+        <a href="#flags" class="nav-item with-ripple" data-page="flags">
           <i data-lucide="alert-triangle"></i>
-          <span>Flags</span>
-          <span class="badge red-badge" id="nav-flags-badge">12</span>
+          <span>Risk Desk</span>
+          <span class="badge red-badge" id="nav-flags-badge">18</span>
         </a>
-        <a href="#privacy" class="nav-item" data-page="privacy">
-          <i data-lucide="lock"></i>
-          <span>Privacy</span>
-        </a>
-        <a href="#commercial" class="nav-item" data-page="commercial">
-          <i data-lucide="dollar-sign"></i>
-          <span>Commercial</span>
-        </a>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-divider">SYSTEM</div>
-        <a href="#webhook" class="nav-item" data-page="webhook">
-          <i data-lucide="webhook"></i>
-          <span>Webhook</span>
-        </a>
-        <a href="#pipeline" class="nav-item" data-page="pipeline">
+        <a href="#pipeline" class="nav-item with-ripple" data-page="pipeline">
           <i data-lucide="git-merge"></i>
-          <span>Pipeline</span>
-        </a>
-        <a href="#settings" class="nav-item" data-page="settings">
-          <i data-lucide="settings"></i>
-          <span>Settings</span>
+          <span>Pipeline Log</span>
         </a>
       </div>
 
@@ -91,13 +62,9 @@
     <main id="main-content">
       <!-- Topbar -->
       <header id="topbar">
-        <div class="breadcrumb">LegalOS <span class="chevron">></span> <span id="current-page-label">Dashboard</span></div>
         <h1 class="page-title" id="page-title">Overview</h1>
-        <div class="topbar-right">
-          <div id="live-clock" class="mono-text">14:32:11</div>
+        <div class="topbar-right" style="margin-left: auto;">
           <div class="status-chip success">ALL SYSTEMS GO</div>
-          <button class="icon-btn"><i data-lucide="bell"></i><div class="notification-dot"></div></button>
-          <button class="icon-btn" id="open-settings-top"><i data-lucide="settings"></i></button>
         </div>
       </header>
 
@@ -110,20 +77,6 @@
 
   <!-- Toast Container -->
   <div id="toast-container"></div>
-
-  <!-- Command Palette Modal -->
-  <div id="cmd-palette" class="modal-overlay hidden">
-    <div class="cmd-modal">
-      <div class="cmd-input-wrapper">
-        <i data-lucide="search"></i>
-        <input type="text" id="cmd-input" placeholder="Search contracts, actions, pages... (Cmd/Ctrl + K)" />
-        <div class="cmd-esc">ESC</div>
-      </div>
-      <div class="cmd-results" id="cmd-results">
-        <!-- Results injected here -->
-      </div>
-    </div>
-  </div>
 
   <script type="module" src="./src/main.js"></script>
 </body>
