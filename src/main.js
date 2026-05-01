@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBurstAnimation();
   initSearch();
   initModal();
+  initIntro();
   
   renderPage('dashboard');
 });
@@ -29,6 +30,18 @@ const state = {
 };
 
 const chartInstances = {};
+
+// --- INTRO SEQUENCE ---
+function initIntro() {
+  const intro = document.getElementById('intro-screen');
+  if (!intro) return;
+  // Let the CSS progress bar animation finish (1.6s)
+  setTimeout(() => {
+    intro.classList.add('doors-open');
+    // Remove from DOM after doors slide away
+    setTimeout(() => intro.remove(), 1200);
+  }, 1600);
+}
 
 // --- CURSOR ---
 function initCursor() {
