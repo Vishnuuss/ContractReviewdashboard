@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBackground();
   initNavigation();
   initTouchRipples();
+  initBurstAnimation();
   initSearch();
   initModal();
   
@@ -92,6 +93,49 @@ function initTouchRipples() {
     
     setTimeout(() => { if (ripple) ripple.remove(); }, 600);
   });
+}
+
+// --- BURST ANIMATION ---
+function initBurstAnimation() {
+  document.addEventListener('click', (e) => {
+    // Only burst if we clicked a button, nav item, or card
+    if (!e.target.closest('button, a, .nav-item, .with-ripple, .kpi-card, .tap-anim')) {
+      createBurst(e.clientX, e.clientY);
+    } else {
+      // Small delay so ripple can show first, or just show simultaneously
+      createBurst(e.clientX, e.clientY);
+    }
+  });
+}
+
+function createBurst(x, y) {
+  const colors = ['#00c8ff', '#00ff88', '#ffffff'];
+  const particleCount = window.matchMedia("(pointer: coarse)").matches ? 8 : 12; // Fewer on mobile
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'click-burst-particle';
+    document.body.appendChild(particle);
+    
+    const size = Math.random() * 4 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = 30 + Math.random() * 50;
+    const tx = Math.cos(angle) * velocity;
+    const ty = Math.sin(angle) * velocity;
+    
+    requestAnimationFrame(() => {
+      particle.style.transform = `translate(${tx}px, ${ty}px) scale(0)`;
+      particle.style.opacity = '0';
+    });
+    
+    setTimeout(() => particle.remove(), 600);
+  }
 }
 
 // --- BACKGROUND ---
