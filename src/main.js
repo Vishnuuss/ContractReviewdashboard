@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import Chart from 'chart.js/auto';
 import { createIcons, icons } from 'lucide';
-import { getDashboardPage, getLibraryPage, getFlagsPage, getPipelinePage } from './pages.js';
+import { getDashboardPage, getLibraryPage, getFlagsPage, getPipelinePage, getSettingsPage, getNotificationsPage } from './pages.js';
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initBackground();
   initNavigation();
   initTouchRipples();
+  initSearch();
+  initModal();
   
   // Render Dashboard by default
   renderPage('dashboard');
@@ -30,15 +32,13 @@ const chartInstances = {};
 
 // --- CURSOR ---
 function initCursor() {
-  // If it's a touch device, don't initialize the custom cursor
   if (window.matchMedia("(pointer: coarse)").matches) return;
 
   const ring = document.getElementById('cursor-ring');
   const dot = document.getElementById('cursor-dot');
   if (!ring || !dot) return;
 
-  let mouseX = window.innerWidth / 2;
-  let mouseY = window.innerHeight / 2;
+  let mouseX = window.innerWidth / 2; let mouseY = window.innerHeight / 2;
   let ringX = mouseX; let ringY = mouseY;
 
   document.addEventListener('mousemove', (e) => {
@@ -84,7 +84,6 @@ function initTouchRipples() {
     ripple.style.top = `${e.clientY - rect.top - radius}px`;
     ripple.classList.add('ripple');
     
-    // Remove old ripples
     const existing = target.querySelector('.ripple');
     if (existing) existing.remove();
     
@@ -108,12 +107,10 @@ function initBackground() {
   camera.position.z = 50;
 
   const geometry = new THREE.BufferGeometry();
-  const particlesCount = 150; // reduced for mobile perf
+  const particlesCount = 150; 
   const posArray = new Float32Array(particlesCount * 3);
 
-  for(let i = 0; i < particlesCount * 3; i++) {
-    posArray[i] = (Math.random() - 0.5) * 150;
-  }
+  for(let i = 0; i < particlesCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 150;
   geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
 
   const material = new THREE.PointsMaterial({ size: 0.6, color: 0x00c8ff, transparent: true, opacity: 0.5 });
@@ -122,8 +119,7 @@ function initBackground() {
 
   let mouseX = 0; let mouseY = 0;
   document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX / window.innerWidth - 0.5;
-    mouseY = e.clientY / window.innerHeight - 0.5;
+    mouseX = e.clientX / window.innerWidth - 0.5; mouseY = e.clientY / window.innerHeight - 0.5;
   });
 
   const animate = () => {
@@ -162,21 +158,7 @@ function initNavigation() {
   });
 }
 
-// --- UTILS ---
-function animateNumber(element, finalValue, duration = 800) {
-  if (!element) return;
-  let start = null;
-  const step = (timestamp) => {
-    if (!start) start = timestamp;
-    const progress = Math.min((timestamp - start) / duration, 1);
-    const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-    element.textContent = Math.floor(easeProgress * finalValue);
-    if (progress < 1) requestAnimationFrame(step);
-    else element.textContent = finalValue;
-  };
-  requestAnimationFrame(step);
-}
-
+// --- UTILS & GLOBAL FUNCTIONS ---
 window.showToast = (msg, type='success') => {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -187,11 +169,96 @@ window.showToast = (msg, type='success') => {
   toast.innerHTML = `<div style="font-weight:600;margin-bottom:4px;color:${color}">${type.toUpperCase()}</div><div style="font-size:13px">${msg}</div>`;
   container.appendChild(toast);
   setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
+    toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)';
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 };
+
+window.resolveActionItem = (id) => {
+  const item = document.getElementById(id);
+  if (item) {
+    item.style.transition = 'all 0.3s ease';
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(100px)';
+    setTimeout(() => {
+      item.remove();
+      window.showToast('Flag successfully resolved.', 'success');
+      
+      // Update badge
+      const badge = document.getElementById('nav-flags-badge');
+      if (badge) {
+        let count = parseInt(badge.textContent);
+        if (count > 0) badge.textContent = count - 1;
+      }
+    }, 300);
+  }
+};
+
+window.openCompanyDetails = (contractId) => {
+  const contract = state.contracts.find(c => c.id === contractId);
+  if (!contract) return;
+  
+  document.getElementById('modal-company-name').textContent = contract.name;
+  document.getElementById('modal-contract-id').textContent = contract.id;
+  document.getElementById('modal-contract-type').textContent = contract.type;
+  
+  const scoreEl = document.getElementById('modal-risk-score');
+  scoreEl.textContent = contract.score;
+  scoreEl.style.color = contract.level === 'CRITICAL' ? 'var(--color-danger)' : contract.level === 'HIGH' ? 'var(--color-warning)' : 'var(--color-success)';
+  
+  document.getElementById('modal-recommendation').textContent = contract.rec;
+  
+  document.getElementById('company-modal').classList.remove('hidden');
+};
+
+function initModal() {
+  document.getElementById('close-modal').addEventListener('click', () => {
+    document.getElementById('company-modal').classList.add('hidden');
+  });
+  document.getElementById('company-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'company-modal') document.getElementById('company-modal').classList.add('hidden');
+  });
+}
+
+// --- SEARCH BAR ---
+function initSearch() {
+  const input = document.getElementById('global-search');
+  const dropdown = document.getElementById('search-dropdown');
+  
+  if (!input || !dropdown) return;
+
+  input.addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    if (term.length < 1) {
+      dropdown.classList.remove('active');
+      return;
+    }
+    
+    const results = state.contracts.filter(c => c.name.toLowerCase().includes(term) || c.id.toLowerCase().includes(term));
+    
+    if (results.length > 0) {
+      dropdown.innerHTML = results.map(c => `
+        <div class="search-item tap-anim" onclick="window.openCompanyDetails('${c.id}'); document.getElementById('search-dropdown').classList.remove('active'); document.getElementById('global-search').value = '';">
+          <div>
+            <div class="search-item-name">${c.name}</div>
+            <div class="search-item-type">${c.type}</div>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--accent-primary);">${c.id}</div>
+        </div>
+      `).join('');
+      dropdown.classList.add('active');
+    } else {
+      dropdown.innerHTML = '<div style="padding:16px; color:var(--text-secondary); font-size:12px; text-align:center;">No results found</div>';
+      dropdown.classList.add('active');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#search-container')) {
+      dropdown.classList.remove('active');
+    }
+  });
+}
 
 // --- PAGE RENDERING ---
 function destroyAllCharts() {
@@ -215,16 +282,13 @@ function renderPage(pageId) {
   else if (pageId === 'contracts') html = getLibraryPage(state);
   else if (pageId === 'flags') html = getFlagsPage();
   else if (pageId === 'pipeline') html = getPipelinePage();
+  else if (pageId === 'settings') html = getSettingsPage();
+  else if (pageId === 'notifications') html = getNotificationsPage();
 
   container.innerHTML = html;
   createIcons({ icons });
 
-  // Post-render init
-  if (pageId === 'dashboard') {
-    animateNumber(document.getElementById('kpi-total'), 247);
-    animateNumber(document.getElementById('kpi-risks'), 18);
-    initDashboardCharts();
-  }
+  if (pageId === 'dashboard') initDashboardCharts();
   if (pageId === 'contracts') initUploader();
   if (pageId === 'flags') initFlagsCharts();
 }
@@ -241,12 +305,15 @@ function initDashboardCharts() {
         data: [8, 31, 89, 119],
         backgroundColor: ['#ff2d55', '#ff6b35', '#ffd60a', '#00ff88'],
         borderWidth: 0,
-        hoverOffset: 5
+        hoverOffset: 10
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'right', labels: { color: '#fff', font: { family: 'Outfit' } } } },
+      plugins: { 
+        legend: { position: 'right', labels: { color: '#fff', font: { family: 'Outfit' } } },
+        tooltip: { callbacks: { label: function(context) { return ' ' + context.label + ': ' + context.raw + ' Contracts'; } } }
+      },
       cutout: '75%', animation: { animateScale: true, duration: 1000 }
     }
   });
@@ -331,7 +398,7 @@ function initUploader() {
           type: 'Processing', score: '-', level: 'PENDING', rec: '...', time: 'Just now'
         });
         
-        setTimeout(() => { renderPage('contracts'); }, 2000); // refresh page to show new item
+        setTimeout(() => { renderPage('contracts'); }, 2000);
       } else throw new Error('Server ' + res.status);
     } catch (err) {
       btn.innerHTML = '✗ FAILED';
