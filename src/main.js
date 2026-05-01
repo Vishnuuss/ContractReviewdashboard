@@ -35,12 +35,12 @@ const chartInstances = {};
 function initIntro() {
   const intro = document.getElementById('intro-screen');
   if (!intro) return;
-  // Let the CSS progress bar animation finish (1.6s)
+  // Let the CSS progress bar and terminal animation finish (2.5s)
   setTimeout(() => {
     intro.classList.add('doors-open');
     // Remove from DOM after doors slide away
     setTimeout(() => intro.remove(), 1200);
-  }, 1600);
+  }, 2500);
 }
 
 // --- CURSOR ---
