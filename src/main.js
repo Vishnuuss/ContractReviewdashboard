@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import Chart from 'chart.js/auto';
 import * as d3 from 'd3';
 import { createIcons, icons } from 'lucide';
+import { getFlagsPage, getPrivacyPage, getCommercialPage, getWebhookPage, getPipelinePage, getSettingsPage } from './pages.js';
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -53,11 +54,16 @@ function initCursor() {
   document.addEventListener('mousedown', () => ring.classList.add('clicking'));
   document.addEventListener('mouseup', () => ring.classList.remove('clicking'));
 
-  const interactables = document.querySelectorAll('a, button, input, .kpi-card, .feed-row, tr, .upload-zone');
-  interactables.forEach(el => {
-    el.addEventListener('mouseenter', () => ring.classList.add('active'));
-    el.addEventListener('mouseleave', () => ring.classList.remove('active'));
-  });
+  document.body.addEventListener('mouseenter', (e) => {
+    if (e.target.closest && e.target.closest('a, button, input, .kpi-card, .feed-row, tr, .upload-zone, .chip')) {
+      ring.classList.add('active');
+    }
+  }, true);
+  document.body.addEventListener('mouseleave', (e) => {
+    if (e.target.closest && e.target.closest('a, button, input, .kpi-card, .feed-row, tr, .upload-zone, .chip')) {
+      ring.classList.remove('active');
+    }
+  }, true);
 }
 
 // --- BACKGROUND ---
@@ -144,7 +150,6 @@ function animateNumber(element, finalValue, duration = 800) {
   const step = (timestamp) => {
     if (!start) start = timestamp;
     const progress = Math.min((timestamp - start) / duration, 1);
-    // easeOutExpo
     const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
     element.textContent = Math.floor(easeProgress * finalValue);
     if (progress < 1) requestAnimationFrame(step);
@@ -157,7 +162,7 @@ window.showToast = (msg, type='success') => {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  let color = type === 'success' ? '#00ff88' : type === 'error' ? '#ff2d55' : '#00c8ff';
+  let color = type === 'success' ? '#00ff88' : type === 'error' ? '#ff2d55' : type === 'warning' ? '#ff6b35' : '#00c8ff';
   toast.style.borderLeftColor = color;
   toast.innerHTML = `<div style="font-weight:600;margin-bottom:4px;color:${color}">${type.toUpperCase()}</div><div style="font-size:13px">${msg}</div>`;
   container.appendChild(toast);
@@ -183,7 +188,6 @@ function initKeyboardShortcuts() {
       cmdPalette.classList.add('hidden');
     }
   });
-
   document.querySelector('.cmd-esc').addEventListener('click', () => cmdPalette.classList.add('hidden'));
 }
 
@@ -192,11 +196,10 @@ function renderPage(pageId) {
   state.currentPage = pageId;
   const container = document.getElementById('pages-container');
   
-  // Transition out
   const current = container.querySelector('.page.active');
   if (current) {
     current.classList.remove('active');
-    setTimeout(() => injectPage(pageId), 150); // wait for fade out
+    setTimeout(() => injectPage(pageId), 150);
   } else {
     injectPage(pageId);
   }
@@ -367,36 +370,38 @@ function injectPage(pageId) {
         </div>
       </div>
     `;
-  } else {
-    html = `
-      <div class="page active">
-        <div class="card" style="text-align:center; padding: 100px;">
-          <i data-lucide="box" style="font-size:48px; color:var(--accent-primary); opacity:0.5; margin-bottom: 24px; display:inline-block;"></i>
-          <h2 style="font-family:var(--font-display); margin-bottom:16px;">${pageId.toUpperCase()} MODULE</h2>
-          <p style="color:var(--text-secondary)">This section is fully active in the production environment.</p>
-        </div>
-      </div>
-    `;
+  } else if (pageId === 'flags') {
+    html = getFlagsPage();
+  } else if (pageId === 'privacy') {
+    html = getPrivacyPage();
+  } else if (pageId === 'commercial') {
+    html = getCommercialPage();
+  } else if (pageId === 'webhook') {
+    html = getWebhookPage();
+  } else if (pageId === 'pipeline') {
+    html = getPipelinePage();
+  } else if (pageId === 'settings') {
+    html = getSettingsPage();
   }
 
   container.innerHTML = html;
   createIcons({ icons });
 
-  // Post-render initialization
+  // Post-render init
   if (pageId === 'dashboard') {
     animateNumber(document.getElementById('kpi-total'), 247);
     animateNumber(document.getElementById('kpi-risks'), 18);
     animateNumber(document.getElementById('kpi-signed'), 31);
-    initCharts();
+    initDashboardCharts();
   }
-  
-  if (pageId === 'contracts') {
-    initUploader();
-  }
+  if (pageId === 'contracts') initUploader();
+  if (pageId === 'flags') initFlagsCharts();
+  if (pageId === 'privacy') initPrivacyCharts();
+  if (pageId === 'commercial') initCommercialCharts();
 }
 
 // --- CHARTS ---
-function initCharts() {
+function initDashboardCharts() {
   const ctx = document.getElementById('donutChart');
   if (!ctx) return;
   new Chart(ctx, {
@@ -412,13 +417,127 @@ function initCharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.7)', font: { family: 'Outfit' } } }
-      },
-      cutout: '75%',
-      animation: { animateScale: true, animateRotate: true, duration: 1500 }
+      plugins: { legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.7)', font: { family: 'Outfit' } } } },
+      cutout: '75%', animation: { animateScale: true, animateRotate: true, duration: 1500 }
     }
   });
+}
+
+function initFlagsCharts() {
+  const ctx = document.getElementById('flagsBarChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Auto-Renewal', 'Liability Cap', 'Price Escalation', 'Arbitration', 'Indemnification'],
+      datasets: [{
+        label: 'Flags Count',
+        data: [23, 19, 17, 14, 11],
+        backgroundColor: '#ff2d55',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } },
+        y: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.7)' } }
+      }
+    }
+  });
+}
+
+function initPrivacyCharts() {
+  const ctx = document.getElementById('privacyRadarChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['GDPR', 'DPDP', 'Residency', 'Sub-processors', 'Breach SLA', 'Deletion Rights'],
+      datasets: [{
+        label: 'Current Portfolio',
+        data: [64, 41, 75, 50, 80, 60],
+        backgroundColor: 'rgba(0, 200, 255, 0.2)',
+        borderColor: '#00c8ff',
+        pointBackgroundColor: '#00c8ff'
+      }, {
+        label: 'Benchmark',
+        data: [90, 85, 95, 80, 90, 85],
+        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+        borderColor: '#00ff88',
+        borderDash: [5, 5],
+        pointBackgroundColor: '#00ff88'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        r: {
+          angleLines: { color: 'rgba(255,255,255,0.1)' },
+          grid: { color: 'rgba(255,255,255,0.1)' },
+          pointLabels: { color: 'rgba(255,255,255,0.7)', font: { family: 'Outfit' } },
+          ticks: { display: false, max: 100, min: 0 }
+        }
+      },
+      plugins: { legend: { labels: { color: '#fff' } } }
+    }
+  });
+}
+
+function initCommercialCharts() {
+  const ctxScatter = document.getElementById('scatterChart');
+  if (ctxScatter) {
+    new Chart(ctxScatter, {
+      type: 'bubble',
+      data: {
+        datasets: [{
+          label: 'Contracts',
+          data: [
+            { x: 1200000, y: 88, r: 15 },
+            { x: 240000, y: 71, r: 8 },
+            { x: 2400000, y: 91, r: 20 },
+            { x: 890000, y: 83, r: 12 },
+            { x: 180000, y: 55, r: 6 }
+          ],
+          backgroundColor: 'rgba(255, 45, 85, 0.6)',
+          borderColor: '#ff2d55'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: 'Contract Value ($)', color: '#fff' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { title: { display: true, text: 'Risk Score (0-100)', color: '#fff' }, grid: { color: 'rgba(255,255,255,0.05)' }, min: 0, max: 100 }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  const ctxBar = document.getElementById('stackedBarChart');
+  if (ctxBar) {
+    new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: ['Payment Risk', 'Liability Cap', 'Auto-Renewal', 'Price Esc', 'Term Penalty'],
+        datasets: [
+          { label: 'Critical', data: [4, 12, 5, 2, 8], backgroundColor: '#ff2d55' },
+          { label: 'High', data: [8, 15, 20, 10, 12], backgroundColor: '#ff6b35' },
+          { label: 'Medium', data: [15, 8, 30, 25, 10], backgroundColor: '#ffd60a' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: { legend: { labels: { color: '#fff' } } }
+      }
+    });
+  }
 }
 
 // --- UPLOADER LOGIC ---
@@ -470,17 +589,14 @@ function initUploader() {
     formData.append('jurisdiction_hint', document.getElementById('cp-jurisdiction').value);
 
     try {
-      // Use local n8n instance if running locally
       const res = await fetch('http://localhost:5678/webhook/contract-review-wtf', {
-        method: 'POST',
-        body: formData
+        method: 'POST', body: formData
       });
       if (res.ok) {
         btn.innerHTML = '<i data-lucide="check"></i> ✓ DISPATCHED';
         btn.style.background = 'var(--color-success)';
         window.showToast('Contract dispatched to workflow successfully.', 'success');
         
-        // Log to terminal on dashboard
         state.contracts.unshift({
           id: 'CTR-NEW', name: document.getElementById('cp-name').value, type: 'Processing', score: 0, level: 'PENDING', rec: '...', loc: '...', val: '...', time: 'Just now'
         });
