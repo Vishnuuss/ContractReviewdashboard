@@ -157,7 +157,7 @@ export function getPipelinePage() {
       <div class="card" style="margin-bottom:24px;">
         <div class="card-title">Live Webhook Log</div>
         <div id="pipeline-log" style="background:#000; border-radius:8px; padding:16px; font-family:var(--font-mono); font-size:12px; color:var(--color-success); height:400px; overflow-y:auto;">
-          <div style="color:var(--text-secondary); margin-bottom:4px;">[14:32:11] POST → /webhook/contract-review-wtf</div>
+          <div style="color:var(--text-secondary); margin-bottom:4px;">[14:32:11] POST → /webhook/smart-legal-intake-v2</div>
           <div style="color:var(--color-success); margin-bottom:4px;">  Response: 200 · {"message":"Workflow was started"}</div>
           <div style="color:var(--text-secondary); margin-bottom:16px;">  Latency: 241ms ✓</div>
           <div style="color:var(--accent-primary); margin-bottom:4px;">[14:32:14] SYSTEM: AI Agents Dispatched</div>
@@ -185,7 +185,7 @@ export function getSettingsPage() {
         <div class="form-grid" style="margin-bottom:24px;">
           <div class="form-group">
             <label>N8N Webhook URL</label>
-            <input type="text" id="setting-webhook-url" class="form-control tap-anim" value="http://localhost:5678/webhook/contract-review-wtf">
+            <input type="text" id="setting-webhook-url" class="form-control tap-anim" value="http://localhost:5678/webhook/smart-legal-intake-v2">
           </div>
           <div class="form-group">
             <label>Airtable Base ID</label>

@@ -509,7 +509,7 @@ function initUploader() {
     formData.append('counterparty_name', document.getElementById('cp-name').value || 'Unknown Entity');
 
     try {
-      const webhookUrl = document.getElementById('setting-webhook-url')?.value || 'http://localhost:5678/webhook/contract-review-wtf';
+      const webhookUrl = document.getElementById('setting-webhook-url')?.value || 'http://localhost:5678/webhook/smart-legal-intake-v2';
       const isMockEnabled = document.getElementById('setting-mock')?.checked !== false;
 
       let success = false;
