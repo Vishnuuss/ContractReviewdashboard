@@ -22,10 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
 const state = {
   currentPage: 'dashboard',
   contracts: [
-    { id: 'CTR-2025-0047', name: 'NexaCloud Technologies', type: 'SaaS', score: 71, level: 'HIGH', rec: 'Negotiate', time: '2 hours ago' },
-    { id: 'CTR-2025-0038', name: 'GlobalPay Corp', type: 'Payment Processing', score: 88, level: 'CRITICAL', rec: 'Escalate', time: '3 hours ago' },
-    { id: 'CTR-2025-0041', name: 'TechBridge Solutions', type: 'MSA', score: 55, level: 'MEDIUM', rec: 'Negotiate', time: '4 hours ago' },
-    { id: 'CTR-2025-0031', name: 'Rakesh Ventures Ltd', type: 'NDA', score: 23, level: 'LOW', rec: 'Sign', time: '1 day ago' },
+    { id: 'CIE-260503-001', name: 'NexaCloud Technologies', type: 'SaaS', score: 71, level: 'HIGH', rec: 'ESCALATE', time: '2 hours ago', status: 'Under Review' },
+    { id: 'CIE-260503-002', name: 'GlobalPay Corp', type: 'Payment Processing', score: 88, level: 'CRITICAL', rec: 'WALK', time: '3 hours ago', status: 'Escalated' },
+    { id: 'CIE-260502-003', name: 'TechBridge Solutions', type: 'MSA', score: 55, level: 'MEDIUM', rec: 'NEGOTIATE', time: '4 hours ago', status: 'Under Review' },
+    { id: 'CIE-260501-004', name: 'Sterling & Partners', type: 'NDA', score: 23, level: 'LOW', rec: 'SIGN', time: '1 day ago', status: 'Approved' },
+    { id: 'CIE-260430-005', name: 'Meridian Health Inc', type: 'Service_Agreement', score: 67, level: 'HIGH', rec: 'NEGOTIATE', time: '3 days ago', status: 'Pending' },
   ]
 };
 
@@ -276,44 +277,74 @@ window.bulkResolve = () => {
 window.openCompanyDetails = (contractId) => {
   const contract = state.contracts.find(c => c.id === contractId);
   if (!contract) return;
-  
   document.getElementById('modal-company-name').textContent = contract.name;
   document.getElementById('modal-contract-id').textContent = contract.id;
   document.getElementById('modal-contract-type').textContent = contract.type;
-  
   const scoreEl = document.getElementById('modal-risk-score');
   scoreEl.textContent = contract.score;
   scoreEl.style.color = contract.level === 'CRITICAL' ? 'var(--color-danger)' : contract.level === 'HIGH' ? 'var(--color-warning)' : 'var(--color-success)';
-  
-  document.getElementById('modal-recommendation').textContent = contract.rec;
-  
+  document.getElementById('modal-recommendation').textContent = contract.rec || 'Pending';
   document.getElementById('company-modal').classList.remove('hidden');
 };
 
 window.downloadReport = () => {
   const cName = document.getElementById('modal-company-name').textContent;
   const cId = document.getElementById('modal-contract-id').textContent;
-  
-  const content = `LEGALOS AUTOMATED RISK REPORT
-==================================
-Company: ${cName}
-Contract ID: ${cId}
-Generated: ${new Date().toISOString()}
-
-RISK SUMMARY:
-- Score: ${document.getElementById('modal-risk-score').textContent}/100
-- Recommendation: ${document.getElementById('modal-recommendation').textContent}
-
-CONFIDENTIAL DOCUMENT
-`;
+  const score = document.getElementById('modal-risk-score').textContent;
+  const rec = document.getElementById('modal-recommendation').textContent;
+  const contract = state.contracts.find(c => c.id === cId);
+  const content = `AIRA CONTRACT INTELLIGENCE ENGINE — RISK REPORT\n${'='.repeat(50)}\nGenerated: ${new Date().toISOString()}\nEngine: AIRA CIE v2.0\n\nCONTRACT DETAILS:\n  Counterparty: ${cName}\n  Contract ID: ${cId}\n  Document Type: ${contract?.type || 'N/A'}\n  Status: ${contract?.status || 'Pending'}\n\nRISK ASSESSMENT:\n  Composite Risk Score: ${score}/100\n  Risk Level: ${contract?.level || 'N/A'}\n  Recommendation: ${rec}\n\nAGENT ANALYSIS SUMMARY:\n  Red Flag Agent: Weighted playbook analysis (22 categories)\n  Privacy Agent: GDPR, CCPA, DORA, NIS2, EU AI Act compliance\n  Commercial Agent: 12 financial risk categories\n\nNEGOTIATION ACTION PLAN:\n  See full report in Airtable for detailed clause-by-clause analysis.\n\n${'='.repeat(50)}\nCONFIDENTIAL — AI-Generated Report\nThis report is for preliminary review only.\nAll findings must be verified by qualified legal counsel.\n`;
   const blob = new Blob([content], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `LegalOS_Report_${cId}.txt`;
+  a.download = `AIRA_Report_${cId}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  window.showToast('Report successfully downloaded.', 'success');
+  window.showToast('Report downloaded successfully.', 'success');
+};
+
+window.saveSettings = () => {
+  const webhook = document.getElementById('setting-webhook-url')?.value;
+  const mock = document.getElementById('setting-mock')?.checked;
+  const base = document.getElementById('setting-airtable-base')?.value;
+  if (webhook) localStorage.setItem('cie_webhook', webhook);
+  localStorage.setItem('cie_mock', mock ? 'true' : 'false');
+  if (base) localStorage.setItem('cie_airtable_base', base);
+  window.showToast('All settings saved successfully.', 'success');
+};
+
+window.exportCSV = () => {
+  const headers = 'ID,Counterparty,Type,Score,Level,Recommendation,Status';
+  const rows = state.contracts.map(c => `${c.id},${c.name},${c.type},${c.score},${c.level},${c.rec},${c.status||'Pending'}`);
+  const csv = [headers, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `AIRA_Contracts_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  window.showToast('CSV exported successfully.', 'success');
+};
+
+window.updateContractStatus = (id, status) => {
+  const c = state.contracts.find(x => x.id === id);
+  if (c) { c.status = status; window.showToast(`${c.name} marked as ${status}`, 'success'); }
+};
+
+window.escalateContract = (id) => {
+  const c = state.contracts.find(x => x.id === id);
+  if (c) {
+    c.status = 'Escalated';
+    const subject = encodeURIComponent(`URGENT: Contract ${c.id} requires legal review — Score ${c.score}/100`);
+    const body = encodeURIComponent(`Contract: ${c.name}\nID: ${c.id}\nRisk Score: ${c.score}/100\nLevel: ${c.level}\nRecommendation: ${c.rec}\n\nThis contract has been auto-escalated by AIRA CIE.`);
+    window.open(`mailto:?subject=${subject}&body=${body}`);
+    window.showToast(`${c.name} escalated to counsel.`, 'warning');
+  }
+};
+
+window.refreshPipeline = () => {
+  window.showToast('Pipeline status refreshed.', 'success');
+  renderPage('pipeline');
 };
 
 function initModal() {
@@ -385,7 +416,7 @@ function renderPage(pageId) {
   let html = '';
   if (pageId === 'dashboard') html = getDashboardPage(state);
   else if (pageId === 'contracts') html = getLibraryPage(state);
-  else if (pageId === 'flags') html = getFlagsPage();
+  else if (pageId === 'flags') html = getFlagsPage(state);
   else if (pageId === 'pipeline') html = getPipelinePage();
   else if (pageId === 'settings') html = getSettingsPage();
   else if (pageId === 'notifications') html = getNotificationsPage();
@@ -394,8 +425,10 @@ function renderPage(pageId) {
   createIcons({ icons });
 
   if (pageId === 'dashboard') {
-    animateNumber(document.getElementById('kpi-total'), 247);
-    animateNumber(document.getElementById('kpi-risks'), 18);
+    const total = state.contracts.length;
+    const risks = state.contracts.filter(c => c.level === 'CRITICAL' || c.level === 'HIGH').length;
+    animateNumber(document.getElementById('kpi-total'), total);
+    animateNumber(document.getElementById('kpi-risks'), risks);
     initDashboardCharts();
   }
   if (pageId === 'contracts') initUploader();
@@ -500,17 +533,30 @@ function initUploader() {
       return;
     }
     
-    btn.innerHTML = '<i data-lucide="loader" class="spin" style="margin-right:8px;"></i> PROCESSING...';
+    btn.innerHTML = '<i data-lucide="loader" class="spin" style="margin-right:8px;"></i> ANALYZING...';
     btn.style.opacity = '0.7';
     createIcons({ icons });
+
+    // Show processing tracker
+    const tracker = document.getElementById('processing-tracker');
+    if (tracker) {
+      tracker.style.display = 'block';
+      const steps = ['track-1','track-2','track-3','track-4','track-5','track-6','track-7','track-8'];
+      steps.forEach((id, i) => {
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) { el.querySelector('.tracker-icon').textContent = '✓'; el.style.color = 'var(--color-success)'; }
+        }, (i + 1) * 800);
+      });
+    }
 
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     formData.append('counterparty_name', document.getElementById('cp-name').value || 'Unknown Entity');
 
     try {
-      const webhookUrl = document.getElementById('setting-webhook-url')?.value || 'http://localhost:5678/webhook/smart-legal-intake-v2';
-      const isMockEnabled = document.getElementById('setting-mock')?.checked !== false;
+      const webhookUrl = localStorage.getItem('cie_webhook') || 'http://localhost:5678/webhook/contract-review-wtf';
+      const isMockEnabled = localStorage.getItem('cie_mock') !== 'false';
 
       let success = false;
       try {
@@ -527,17 +573,18 @@ function initUploader() {
       }
 
       if (success) {
-        btn.innerHTML = '<i data-lucide="check"></i> ✓ SUCCESS';
+        btn.innerHTML = '<i data-lucide="check"></i> ✓ DISPATCHED';
         btn.style.background = 'var(--color-success)';
         btn.style.color = '#000';
-        window.showToast('Contract dispatched to workflow securely.', 'success');
+        window.showToast('Contract dispatched to AIRA CIE pipeline. 5 AI agents analyzing...', 'success');
         
+        const newId = 'CIE-' + new Date().toISOString().slice(2,10).replace(/-/g,'') + '-' + String(state.contracts.length + 1).padStart(3,'0');
         state.contracts.unshift({
-          id: 'CTR-NEW', name: document.getElementById('cp-name').value || 'New Upload',
-          type: 'Processing', score: '-', level: 'PENDING', rec: '...', time: 'Just now'
+          id: newId, name: document.getElementById('cp-name').value || 'New Upload',
+          type: 'Processing...', score: '—', level: 'PENDING', rec: 'Analyzing', time: 'Just now', status: 'Processing'
         });
         
-        setTimeout(() => { renderPage('contracts'); }, 2000);
+        setTimeout(() => { renderPage('contracts'); }, 3000);
       } else {
         throw new Error('Server ' + res.status);
       }

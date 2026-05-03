@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>LegalOS by AntiGravity</title>
+  <title>AIRA CIE — Contract Intelligence Engine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@100..900&family=Syne:wght@400..800&display=swap" rel="stylesheet">
@@ -16,13 +16,13 @@
     <div class="intro-door intro-door-bottom"></div>
     <div class="intro-content">
       <div class="analytical-ring">
-        <i data-lucide="cpu" class="intro-logo"></i>
+        <i data-lucide="shield" class="intro-logo"></i>
       </div>
-      <div class="intro-text">LEGAL<span style="font-weight:300; color:#fff;">OS</span></div>
+      <div class="intro-text">AIRA<span style="font-weight:300; color:#fff;"> CIE</span></div>
       <div class="intro-terminal">
-        <div class="term-line">Initializing deep neural networks... [OK]</div>
-        <div class="term-line">Connecting to enterprise datalake... [OK]</div>
-        <div class="term-line">Loading risk analysis models... <span class="term-blink">_</span></div>
+        <div class="term-line">Loading 5 AI agents... [OK]</div>
+        <div class="term-line">PII Redaction engine active... [OK]</div>
+        <div class="term-line">Contract Intelligence Engine v2.0 <span class="term-blink">_</span></div>
       </div>
       <div class="intro-loader"></div>
     </div>
@@ -42,8 +42,8 @@
     <!-- Sidebar -->
     <nav id="sidebar">
       <div class="sidebar-header">
-        <i data-lucide="hexagon" class="logo-icon"></i>
-        <span class="logo-text">LEGALOS</span>
+        <i data-lucide="shield" class="logo-icon"></i>
+        <span class="logo-text">AIRA CIE</span>
       </div>
       
       <div class="nav-section" style="margin-top: 0; display: flex; flex-direction: column; height: 100%;">
@@ -100,7 +100,7 @@
         </div>
 
         <div class="topbar-right">
-          <div class="status-chip success">ALL SYSTEMS GO</div>
+          <div class="status-chip success">ENGINE v2.0 ● ONLINE</div>
         </div>
       </header>
 
@@ -114,33 +114,40 @@
   <!-- Toast Container -->
   <div id="toast-container"></div>
 
-  <!-- Company Details Modal -->
+  <!-- Contract Detail Modal -->
   <div class="modal-overlay hidden" id="company-modal">
     <div class="modal-content tap-anim">
       <div class="modal-header">
-        <h2 id="modal-company-name" style="font-family:var(--font-display); font-weight:800;">Company Name</h2>
+        <h2 id="modal-company-name" style="font-family:var(--font-display); font-weight:800;">Company</h2>
         <button id="close-modal" class="icon-btn with-ripple"><i data-lucide="x"></i></button>
       </div>
       <div class="modal-body">
         <div class="form-grid">
           <div class="form-group">
             <label>Contract ID</label>
-            <div id="modal-contract-id" class="mono-text">CTR-XXX</div>
+            <div id="modal-contract-id" class="mono-text">CIE-XXX</div>
           </div>
           <div class="form-group">
-            <label>Contract Type</label>
+            <label>Document Type</label>
             <div id="modal-contract-type" style="color:#fff;">Type</div>
           </div>
           <div class="form-group">
             <label>Risk Score</label>
-            <div id="modal-risk-score" style="color:var(--color-warning); font-size:20px; font-weight:700;">80</div>
+            <div id="modal-risk-score" style="color:var(--color-warning); font-size:28px; font-weight:700;">0</div>
           </div>
           <div class="form-group">
             <label>Recommendation</label>
-            <div id="modal-recommendation" style="color:#fff;">Action</div>
+            <div id="modal-recommendation" style="color:#fff; font-weight:700;">Pending</div>
           </div>
         </div>
-        <button class="btn-primary with-ripple tap-anim" style="margin-top:24px; width:100%;" onclick="window.downloadReport()">📄 DOWNLOAD FULL REPORT</button>
+        <div style="display:flex; gap:8px; margin-top:20px; flex-wrap:wrap;">
+          <button class="btn-primary with-ripple tap-anim" style="flex:1; min-width:140px;" onclick="window.downloadReport()">📄 Download Report</button>
+          <button class="btn-primary with-ripple tap-anim" style="flex:1; min-width:140px; background:var(--color-success);" onclick="window.updateContractStatus(document.getElementById('modal-contract-id').textContent, 'Approved'); document.getElementById('company-modal').classList.add('hidden'); window.showToast('Contract approved','success');">✅ Approve</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+          <button class="btn-primary with-ripple tap-anim" style="flex:1; min-width:140px; background:var(--color-warning);" onclick="window.escalateContract(document.getElementById('modal-contract-id').textContent); document.getElementById('company-modal').classList.add('hidden');">⬆ Escalate to Counsel</button>
+          <button class="btn-primary with-ripple tap-anim" style="flex:1; min-width:140px; background:var(--color-danger);" onclick="window.updateContractStatus(document.getElementById('modal-contract-id').textContent, 'Rejected'); document.getElementById('company-modal').classList.add('hidden'); window.showToast('Contract rejected','error');">✗ Reject</button>
+        </div>
       </div>
     </div>
   </div>
